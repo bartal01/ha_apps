@@ -14,12 +14,12 @@ boot: auto
 init: false
 panel_icon: mdi:tennis
 panel_title: Tennis Bespannungen
-webui: "http://[HOST]:[PORT:5000]"
-watchdog: "http://[HOST]:5000/health"
+webui: "http://[HOST]:[PORT:5055]"
+watchdog: "http://[HOST]:5055/health"
 ports:
-  5000/tcp: 5000
+  5055/tcp: 5055
 ports_description:
-  5000/tcp: Web Interface
+  5055/tcp: Web Interface
 options:
   require_login: false
   admin_username: ""
