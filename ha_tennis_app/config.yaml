@@ -1,0 +1,34 @@
+name: "Tennis Bespannungs-Manager"
+version: "1.0.0"
+slug: "tennis_stringing"
+description: "Verwalte Tennis-Bespannungen, Schläger, Saiten und Personen"
+url: "https://github.com/dein-user/tennis-stringing-addon"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+startup: application
+boot: auto
+init: false
+panel_icon: mdi:tennis
+panel_title: Tennis Bespannungen
+webui: "http://[HOST]:[PORT:5000]"
+watchdog: "http://[HOST]:5000/health"
+ports:
+  5000/tcp: 5000
+ports_description:
+  5000/tcp: Web Interface
+options:
+  require_login: false
+  admin_username: ""
+  admin_password: ""
+schema:
+  require_login: bool
+  admin_username: str
+  admin_password: password
+map:
+  - type: addon_config
+    read_only: false
+    path: /config

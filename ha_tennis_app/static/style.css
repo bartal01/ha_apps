@@ -1,0 +1,53 @@
+/* Auth Overlay */
+.auth-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-box {
+    background: var(--card-bg);
+    padding: 40px;
+    border-radius: var(--radius);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    width: 90%;
+    max-width: 400px;
+}
+
+.auth-box h2 {
+    margin-bottom: 20px;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.auth-box h2 i {
+    color: var(--secondary-color);
+    margin-right: 10px;
+}
+
+/* Header Top */
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+#user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #7f8c8d;
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 12px;
+}
