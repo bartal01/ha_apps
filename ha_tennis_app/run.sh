@@ -12,11 +12,11 @@ export ADMIN_PASSWORD="$ADMIN_PASS"
 export DATA_DIR="/config/tennis_stringing"
 export FLASK_APP="app.py"
 
-# Daten-Verzeichnis erstellen
+# Daten-Verzeichnis erstellen.
 mkdir -p "$DATA_DIR"
 
 bashio::log.info "Starte Tennis Bespannungs-Manager..."
 bashio::log.info "Daten werden gespeichert in: $DATA_DIR"
 
-# Starte Tennis App
+# Starte App
 exec python app.py
