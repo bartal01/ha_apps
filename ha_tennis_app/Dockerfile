@@ -1,4 +1,5 @@
-FROM python:3.11-alpine
+ARG BUILD_FROM
+FROM $BUILD_FROM
 USER root
 
 # Installiere System-Abhängigkeiten
