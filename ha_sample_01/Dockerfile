@@ -4,7 +4,7 @@ FROM python:3.11-alpine
 #RUN apk add --no-cache gcc musl-dev libffi-dev sqlite sqlite-dev
 
 # Arbeitsverzeichnis
-WORKDIR /app
+#WORKDIR /app
 
 # Python Abhängigkeiten
 #OPY requirements.txt /
@@ -12,7 +12,7 @@ WORKDIR /app
 
 # Kopiere App
 COPY app.py /
-COPY . /
+#COPY . /
 
 # Port
 #EXPOSE 5000
