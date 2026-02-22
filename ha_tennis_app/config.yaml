@@ -1,5 +1,5 @@
 name: "Tennis Bespannungs-Manager"
-version: "1.0.2"
+version: "1.0.3"
 slug: "tennis_stringing"
 description: "Verwalte Tennis-Bespannungen, Schläger, Saiten und Personen"
 url: "https://github.com/dein-user/tennis-stringing-addon"
