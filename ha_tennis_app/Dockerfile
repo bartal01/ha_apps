@@ -24,7 +24,8 @@ COPY . .
 EXPOSE 5000
 
 # Start-Skript ausführbar machen
+COPY run.sh /
 RUN chmod a+x run.sh
 
 # Start
-CMD ["./run.sh"]
+CMD ["/run.sh"]
