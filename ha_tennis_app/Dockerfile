@@ -26,4 +26,4 @@ EXPOSE 5000
 RUN chmod a+x run.sh
 
 # Start
-CMD ["/run.sh"]
+CMD ["./run.sh"]
