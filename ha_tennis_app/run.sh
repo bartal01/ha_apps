@@ -1,4 +1,4 @@
-#!/usr/bin/env bashio
+#!/usr/bin/with-contenv bashio
 
 # Config auslesen
 REQUIRE_LOGIN=$(bashio::config 'require_login')
