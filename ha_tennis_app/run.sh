@@ -1,5 +1,7 @@
 #!/usr/bin/with-contenv bashio
 
+echo "---------------------------------------------"
+
 bashio::log.info "Starte Tennis Bespannungs-Manager..."
 
 # Config auslesen
@@ -21,4 +23,4 @@ bashio::log.info "Initialisiert"
 bashio::log.info "Daten werden gespeichert in: $DATA_DIR"
 
 # Starte App
-exec python app.py
+python app.py
