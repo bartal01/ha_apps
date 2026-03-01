@@ -1,7 +1,7 @@
-name: "Hello world"
-description: "Meine 1. App"
-version: "1.0.16"
-slug: "hello_world"
+name: "Alex Tennis Stringing App"
+description: "Verwalte Besaitungen von Tennisschlägern"
+version: "1.0.0"
+slug: "alex_tennis_stringing"
 init: false
 arch:
   - aarch64
@@ -11,7 +11,8 @@ arch:
   - i386
 startup: application
 boot: manual
-init: false
+panel_icon: mdi:tennis
+panel_title: Alex Tennis Bespannungen
 webui: "http://[HOST]:[PORT:5000]"
 watchdog: "http://[HOST]:5000/health"
 ports:
@@ -20,7 +21,7 @@ ports_description:
   5000/tcp: Web Interface
 options:
   require_login: false
-  admin_username: "root"
+  admin_username: "admin"
   admin_password: ""
 schema:
   require_login: bool

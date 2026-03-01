@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bespannungs-Timeline - Tennis Manager</title>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        .gantt-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-top: 20px;
+        }
+        
+        .filter-section {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: end;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        #gantt-chart {
+            width: 100%;
+            height: 600px;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: var(--radius);
+            text-align: center;
+        }
+        
+        .stat-box h4 {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 5px;
+        }
+        
+        .stat-box p {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .back-btn {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="btn btn-secondary back-btn" onclick="window.location.href='/'">
+            <i class="fas fa-arrow-left"></i> Zurück zur Übersicht
+        </button>
+        
+        <header style="margin-bottom: 20px;">
+            <h1><i class="fas fa-chart-gantt"></i> Bespannungs-Timeline</h1>
+        </header>
+
+        <div class="filter-section">
+            <div class="filter-group">
+                <label>Person filtern</label>
+                <select id="person-filter" onchange="loadGanttData()">
+                    <option value="">-- Alle Personen --</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Zeitraum</label>
+                <select id="time-range" onchange="loadGanttData()">
+                    <option value="all">Gesamter Zeitraum</option>
+                    <option value="year">Letztes Jahr</option>
+                    <option value="6months">Letzte 6 Monate</option>
+                    <option value="3months">Letzte 3 Monate</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="exportChart()">
+                <i class="fas fa-download"></i> Exportieren
+            </button>
+        </div>
+
+        <div class="stats-row" id="stats-row">
+            <div class="stat-box">
+                <h4 id="total-strings">0</h4>
+                <p>Bespannungen</p>
+            </div>
+            <div class="stat-box">
+                <h4 id="total-rackets">0</h4>
+                <p>Schläger</p>
+            </div>
+            <div class="stat-box">
+                <h4 id="avg-duration">0</h4>
+                <p>Ø Haltbarkeit (Tage)</p>
+            </div>
+            <div class="stat-box">
+                <h4 id="active-strings">0</h4>
+                <p>Aktive Bespannungen</p>
+            </div>
+        </div>
+
+        <div class="gantt-container">
+            <div id="gantt-chart"></div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+        let allData = [];
+
+        // Auth Helper (gleich wie in app.js)
+        let authHeader = localStorage.getItem('authHeader');
+        
+        async function apiFetch(url, options = {}) {
+            if (authHeader) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = authHeader;
+            }
+            return fetch(url, options);
+        }
+
+        // Initialisierung
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadPersons();
+            await loadGanttData();
+            
+            // Chart Responsiveness
+            window.addEventListener('resize', () => {
+                if (chart) chart.resize();
+            });
+        });
+
+        // Personen laden
+        async function loadPersons() {
+            try {
+                const response = await apiFetch('/api/personen');
+                const persons = await response.json();
+                const select = document.getElementById('person-filter');
+                
+                persons.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = p.name;
+                    select.appendChild(option);
+                });
+            } catch (e) {
+                console.error('Fehler beim Laden der Personen:', e);
+            }
+        }
+
+        // Gantt-Daten laden
+        async function loadGanttData() {
+            try {
+                const [bespannungen, schlaeger, personen] = await Promise.all([
+                    apiFetch('/api/bespannungen').then(r => r.json()),
+                    apiFetch('/api/schlaeger').then(r => r.json()),
+                    apiFetch('/api/personen').then(r => r.json())
+                ]);
+
+                const personFilter = document.getElementById('person-filter').value;
+                const timeRange = document.getElementById('time-range').value;
+
+                // Filter nach Person
+                let filteredData = bespannungen;
+                if (personFilter) {
+                    filteredData = bespannungen.filter(b => {
+                        const schlaegerItem = schlaeger.find(s => s.id === b.schlaeger_id);
+                        return schlaegerItem && schlaegerItem.person_id == personFilter;
+                    });
+                }
+
+                // Filter nach Zeit
+                const now = new Date();
+                filteredData = filteredData.filter(b => {
+                    const startDate = new Date(b.bespanndatum);
+                    if (timeRange === 'year') {
+                        return (now - startDate) < (365 * 24 * 60 * 60 * 1000);
+                    } else if (timeRange === '6months') {
+                        return (now - startDate) < (180 * 24 * 60 * 60 * 1000);
+                    } else if (timeRange === '3months') {
+                        return (now - startDate) < (90 * 24 * 60 * 60 * 1000);
+                    }
+                    return true;
+                });
+
+                allData = filteredData;
+                updateStats(filteredData);
+                renderGantt(filteredData, schlaeger, personen);
+
+            } catch (e) {
+                console.error('Fehler beim Laden:', e);
+            }
+        }
+
+        // Statistiken aktualisieren
+        function updateStats(data) {
+            const total = data.length;
+            const uniqueRackets = new Set(data.map(d => d.schlaeger_id)).size;
+            const active = data.filter(d => !d.datum_gerissen).length;
+            
+            // Durchschnittliche Haltbarkeit berechnen
+            let totalDays = 0;
+            let count = 0;
+            data.forEach(b => {
+                if (b.datum_gerissen) {
+                    const start = new Date(b.bespanndatum);
+                    const end = new Date(b.datum_gerissen);
+                    const days = (end - start) / (1000 * 60 * 60 * 24);
+                    if (days > 0) {
+                        totalDays += days;
+                        count++;
+                    }
+                }
+            });
+            const avgDays = count > 0 ? Math.round(totalDays / count) : 0;
+
+            document.getElementById('total-strings').textContent = total;
+            document.getElementById('total-rackets').textContent = uniqueRackets;
+            document.getElementById('avg-duration').textContent = avgDays;
+            document.getElementById('active-strings').textContent = active;
+        }
+
+        // Gantt Chart rendern
+        function renderGantt(data, schlaeger, personen) {
+            const chartDom = document.getElementById('gantt-chart');
+            
+            if (chart) {
+                chart.dispose();
+            }
+            
+            chart = echarts.init(chartDom);
+
+            // Daten für ECharts Gantt vorbereiten
+            const categories = [];
+            const seriesData = [];
+            
+            // Gruppiere nach Schläger
+            const racketGroups = {};
+            
+            data.forEach(b => {
+                const racket = schlaeger.find(s => s.id === b.schlaeger_id);
+                if (!racket) return;
+                
+                const racketName = `${racket.marke} ${racket.modell}`;
+                if (!racketGroups[racketName]) {
+                    racketGroups[racketName] = [];
+                }
+                racketGroups[racketName].push(b);
+            });
+
+            // Sortiere Schläger nach Name
+            const sortedRackets = Object.keys(racketGroups).sort();
+            
+            sortedRackets.forEach((racketName, index) => {
+                categories.push(racketName);
+                
+                racketGroups[racketName].forEach((b, i) => {
+                    const start = new Date(b.bespanndatum).getTime();
+                    const end = b.datum_gerissen 
+                        ? new Date(b.datum_gerissen).getTime()
+                        : new Date().getTime();
+                    
+                    const isActive = !b.datum_gerissen;
+                    const duration = Math.round((end - start) / (1000 * 60 * 60 * 24));
+                    
+                    seriesData.push({
+                        name: b.saite_marke + ' ' + b.saite_modell,
+                        value: [
+                            index, // Y-Achse Index
+                            start,
+                            end,
+                            duration
+                        ],
+                        itemStyle: {
+                            color: isActive ? '#27ae60' : '#e74c3c',
+                            borderRadius: 4
+                        },
+                        // Tooltip Daten
+                        detail: {
+                            saite: b.saite_marke + ' ' + b.saite_modell,
+                            haerte: `${b.haerte_laengs || '-'}/${b.haerte_quer || '-'} kg`,
+                            dauer: duration + ' Tage',
+                            status: isActive ? 'Aktiv' : 'Gerissen',
+                            kommentar: b.kommentar || '-'
+                        }
+                    });
+                });
+            });
+
+            const option = {
+                tooltip: {
+                    formatter: function (params) {
+                        const d = params.data.detail;
+                        const start = new Date(params.value[1]).toLocaleDateString('de-DE');
+                        const end = params.value[2] 
+                            ? new Date(params.value[2]).toLocaleDateString('de-DE')
+                            : 'Heute';
+                        
+                        return `
+                            <div style="padding: 10px;">
+                                <strong>${params.name}</strong><br/>
+                                <strong>Schläger:</strong> ${categories[params.value[0]]}<br/>
+                                <strong>Zeitraum:</strong> ${start} - ${end}<br/>
+                                <strong>Dauer:</strong> ${d.dauer}<br/>
+                                <strong>Härte:</strong> ${d.haerte}<br/>
+                                <strong>Status:</strong> ${d.status}<br/>
+                                ${d.kommentar !== '-' ? `<strong>Kommentar:</strong> ${d.kommentar}<br/>` : ''}
+                            </div>
+                        `;
+                    }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '15%',
+                    top: '10%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'time',
+                    axisLabel: {
+                        formatter: '{dd}.{MM}.{yyyy}',
+                        rotate: 30
+                    },
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            type: 'dashed',
+                            opacity: 0.3
+                        }
+                    }
+                },
+                yAxis: {
+                    type: 'category',
+                    data: categories,
+                    axisLabel: {
+                        interval: 0,
+                        fontSize: 11
+                    },
+                    splitLine: {
+                        show: true,
+                        lineStyle: {
+                            opacity: 0.1
+                        }
+                    }
+                },
+                dataZoom: [
+                    {
+                        type: 'slider',
+                        xAxisIndex: 0,
+                        filterMode: 'weakFilter',
+                        height: 20,
+                        bottom: 0,
+                        start: 0,
+                        end: 100,
+                        handleIcon: 'path://M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                        handleSize: '80%',
+                        showDetail: false
+                    },
+                    {
+                        type: 'inside',
+                        xAxisIndex: 0,
+                        filterMode: 'weakFilter'
+                    }
+                ],
+                series: [
+                    {
+                        type: 'custom',
+                        renderItem: function (params, api) {
+                            const categoryIndex = api.value(0);
+                            const start = api.coord([api.value(1), categoryIndex]);
+                            const end = api.coord([api.value(2), categoryIndex]);
+                            const height = api.size([0, 1])[1] * 0.6;
+                            
+                            const rectShape = echarts.graphic.clipRectByRect({
+                                x: start[0],
+                                y: start[1] - height / 2,
+                                width: end[0] - start[0],
+                                height: height
+                            }, {
+                                x: params.coordSys.x,
+                                y: params.coordSys.y,
+                                width: params.coordSys.width,
+                                height: params.coordSys.height
+                            });
+                            
+                            return rectShape && {
+                                type: 'rect',
+                                transition: ['shape'],
+                                shape: rectShape,
+                                style: api.style()
+                            };
+                        },
+                        encode: {
+                            x: [1, 2],
+                            y: 0
+                        },
+                        data: seriesData
+                    }
+                ]
+            };
+
+            chart.setOption(option);
+        }
+
+        // Chart exportieren
+        function exportChart() {
+            if (!chart) return;
+            
+            const url = chart.getDataURL({
+                type: 'png',
+                pixelRatio: 2,
+                backgroundColor: '#fff'
+            });
+            
+            const link = document.createElement('a');
+            link.download = 'bespannungs-timeline.png';
+            link.href = url;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

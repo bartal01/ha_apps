@@ -2,7 +2,9 @@
 
 echo "Hallo Welt!"
 
-bashio::log.info "Starte Tennis Bespannungs-Manager."
+bashio::log.info "Starte Alex Test 1."
+
+bashio::log.info "Initialisieren..."
 
 # Config auslesen
 REQUIRE_LOGIN=$(bashio::config 'require_login')
@@ -13,7 +15,7 @@ ADMIN_PASS=$(bashio::config 'admin_password')
 export REQUIRE_LOGIN="$REQUIRE_LOGIN"
 export ADMIN_USERNAME="$ADMIN_USER"
 export ADMIN_PASSWORD="$ADMIN_PASS"
-export DATA_DIR="/config/hello_world"
+export DATA_DIR="/config/alex_tennis_stringing"
 export FLASK_APP="app.py"
 
 # Daten-Verzeichnis erstellen
@@ -23,4 +25,4 @@ bashio::log.info "Initialisiert"
 bashio::log.info "Daten werden gespeichert in: $DATA_DIR"
 
 # Starte App
-#python app.py
+python app.py
