@@ -473,7 +473,7 @@ async function openModal(type, id = null) {
     // Wenn Bearbeiten, Daten laden
     if (id) {
         try {
-            const endpoint = type === 'person' ? 'personen' : type === 'saite' ? 'saiten' : type;
+            const endpoint = type === 'person' ? 'personen' : type === 'saite' ? 'saiten' : type === 'bespannung' ? 'bespannungen' : type;
             const response = await apiFetch(`/api/${endpoint}/${id}`);
             const data = await response.json();
             Object.keys(data).forEach(key => {
