@@ -415,78 +415,7 @@ async function openModal(type, id = null) {
                 </div>
             `;
             break;
-         case 'bespannung':
-            title.textContent = id ? 'Bespannung bearbeiten' : 'Neue Bespannung';
-            try {
-                const [schlaegerRes, saitenRes, bespannungenRes] = await Promise.all([
-                    apiFetch('/api/schlaeger'),
-                    apiFetch('/api/saiten'),
-                    apiFetch('/api/bespannungen')
-                ]);
-        
-                const allSchlaeger = await schlaegerRes.json();
-                const saiten = await saitenRes.json();
-                const bespannungen = await bespannungenRes.json();
-                
-                if (!saiten.length) {
-                    alert('Bitte zuerst eine Saite anlegen!');
-                    closeModal();
-                    return;
-                }
-                
-                // Erstelle Map der aktiven Bespannungen pro Schläger
-                const activeBespannungen = {};
-                bespannungen.forEach(b => {
-                    if (!b.datum_gerissen) {
-                        activeBespannungen[b.schlaeger_id] = b;
-                    }
-                });
-                
-                let availableSchlaeger = allSchlaeger;
-                let currentBespannung = null;
-                let infoText = '';
-                
-                if (!id) {
-                    // NEU: Filtere belegte Schläger
-                    availableSchlaeger = allSchlaeger.filter(s => !activeBespannungen[s.id]);
-                    
-                    // Info über belegte Schläger
-                    const occupiedCount = allSchlaeger.length - availableSchlaeger.length;
-                    if (occupiedCount > 0) {
-                        infoText = `<div style="background: #fff3cd; padding: 10px; border-radius: 4px; margin-bottom: 15px; font-size: 0.9rem;">
-                            <i class="fas fa-info-circle"></i> 
-                            ${occupiedCount} Schläger sind aktuell bespannt und nicht verfügbar.
-                            <br><small>Um einen bespannten Schläger neu zu bespannen, markiere die bestehende Bespannung zuerst als "gerissen".</small>
-                        </div>`;
-                    }
-                    
-                    if (!availableSchlaeger.length) {
-                        alert('Keine freien Schläger verfügbar! Alle Schläger sind bereits bespannt.');
-                        closeModal();
-                        return;
-                    }
-                } else {
-                    // BEARBEITEN: Lade aktuelle Daten
-                    const currentRes = await apiFetch(`${API_BASE}/api/bespannungen/${id}`);
-                    currentBespannung = await currentRes.json();
-                    availableSchlaeger = allSchlaeger; // Alle anzeigen
-                }
-                
-                // ... restlicher Code wie oben
-                
-                html = infoText + `
-                    <div class="form-group">
-                        <!-- ... Formularfelder ... -->
-                    </div>
-                `;
-                
-            } catch (e) {
-                console.error('Fehler:', e);
-                alert('Fehler beim Laden der Daten');
-                return;
-            }
-            break;
-            /*
+            
         case 'bespannung':
             title.textContent = id ? 'Bespannung bearbeiten' : 'Neue Bespannung';
             try {
@@ -537,7 +466,6 @@ async function openModal(type, id = null) {
                 console.error('Fehler beim Laden:', e);
             }
             break;
-            */
     }
     
     form.innerHTML = html;
