@@ -1,6 +1,6 @@
 name: "Alex Tennis Stringing App"
 description: "Verwalte Besaitungen von Tennisschlägern"
-version: "1.0.2"
+version: "1.0.3"
 slug: "alex_tennis_stringing"
 init: false
 arch:
